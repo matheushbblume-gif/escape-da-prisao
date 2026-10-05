@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Escape da Prisão - Nível 1</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #hud {
+            height: 60px;
+            background: #181818;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            font-size: 20px;
+            border-bottom: 3px solid #333;
+        }
+
+        #jogo {
+            position: relative;
+            width: 100vw;
+            height: calc(100vh - 60px);
+            background: #252525;
+            overflow: hidden;
+        }
+
+        /* JOGADOR */
+
+        #player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            border: 3px solid white;
+            border-radius: 8px;
+            left: 70px;
+            top: 70px;
+            z-index: 10;
+        }
+
+        /* PAREDES */
+
+        .parede {
+            position: absolute;
+            background: #555;
+            border: 3px solid #777;
+        }
+
+        #parede1 {
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 25px;
+        }
+
+        #parede2 {
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 25px;
+        }
+
+        #parede3 {
+            left: 0;
+            top: 0;
+            width: 25px;
+            height: 100%;
+        }
+
+        #parede4 {
+            right: 0;
+            top: 0;
+            width: 25px;
+            height: 100%;
+        }
+
+        #parede5 {
+            left: 180px;
+            top: 100px;
+            width: 30px;
+            height: 300px;
+        }
+
+        #parede6 {
+            left: 180px;
+            top: 100px;
+            width: 300px;
+            height: 30px;
+        }
+
+        #parede7 {
+            left: 480px;
+            top: 100px;
+            width: 30px;
+            height: 300px;
+        }
+
+        #parede8 {
+            left: 300px;
+            top: 400px;
+            width: 300px;
+            height: 30px;
+        }
+
+        #parede9 {
+            left: 600px;
+            top: 220px;
+            width: 30px;
+            height: 210px;
+        }
+
+        /* CHAVE */
+
+        #chave {
+            position: absolute;
+            left: 350px;
+            top: 200px;
+            font-size: 35px;
+            z-index: 5;
+        }
+
+        /* PORTA */
+
+        #porta {
+            position: absolute;
+            right: 60px;
+            top: 250px;
+            width: 70px;
+            height: 100px;
+            background: #8b4513;
+            border: 5px solid #d4a017;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+            z-index: 5;
+        }
+
+        /* ARMADILHAS */
+
+        .armadilha {
+            position: absolute;
+            font-size: 35px;
+            z-index: 5;
+        }
+
+        #armadilha1 {
+            left: 280px;
+            top: 520px;
+        }
+
+        #armadilha2 {
+            left: 700px;
+            top: 150px;
+        }
+
+        #armadilha3 {
+            left: 800px;
+            top: 450px;
+        }
+
+        /* MENSAGEM */
+
+        #mensagem {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 3px solid white;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 100;
+        }
+
+        #mensagem h1 {
+            margin-top: 0;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="hud">
+        <div>🔒 ESCAPE DA PRISÃO</div>
+        <div>❤️ Vidas: <span id="vidas">3</span></div>
+        <div>🗝️ Chave: <span id="temChave">NÃO</span></div>
+    </div>
+
+    <div id="jogo">
+
+        <!-- JOGADOR -->
+        <div id="player"></div>
+
+        <!-- PAREDES -->
+        <div class="parede" id="parede1"></div>
+        <div class="parede" id="parede2"></div>
+        <div class="parede" id="parede3"></div>
+        <div class="parede" id="parede4"></div>
+
+        <div class="parede" id="parede5"></div>
+        <div class="parede" id="parede6"></div>
+        <div class="parede" id="parede7"></div>
+        <div class="parede" id="parede8"></div>
+        <div class="parede" id="parede9"></div>
+
+        <!-- CHAVE -->
+        <div id="chave">🗝️</div>
+
+        <!-- PORTA -->
+        <div id="porta">🚪</div>
+
+        <!-- ARMADILHAS -->
+        <div class="armadilha" id="armadilha1">🔺</div>
+        <div class="armadilha" id="armadilha2">🔺</div>
+        <div class="armadilha" id="armadilha3">🔺</div>
+
+        <!-- TELA DE RESULTADO -->
+        <div id="mensagem">
+            <h1 id="tituloMensagem">VOCÊ ESCAPOU!</h1>
+            <p id="textoMensagem">Parabéns! Você conseguiu fugir da prisão.</p>
+
+            <button onclick="location.reload()">
+                🔄 Jogar novamente
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+
+        const player = document.getElementById("player");
+        const jogo = document.getElementById("jogo");
+        const chave = document.getElementById("chave");
+        const porta = document.getElementById("porta");
+        const mensagem = document.getElementById("mensagem");
+        const tituloMensagem = document.getElementById("tituloMensagem");
+        const textoMensagem = document.getElementById("textoMensagem");
+        const vidasTexto = document.getElementById("vidas");
+        const temChaveTexto = document.getElementById("temChave");
+
+        let x = 70;
+        let y = 70;
+
+        let velocidade = 5;
+
+        let vidas = 3;
+
+        let temChave = false;
+
+        let jogoTerminado = false;
+
+        const teclas = {};
+
+        document.addEventListener("keydown", function(event) {
+
+            teclas[event.key.toLowerCase()] = true;
+
+        });
+
+        document.addEventListener("keyup", function(event) {
+
+            teclas[event.key.toLowerCase()] = false;
+
+        });
+
+
+        function pegarPosicao(elemento) {
+
+            const rect = elemento.getBoundingClientRect();
+
+            const jogoRect = jogo.getBoundingClientRect();
+
+            return {
+
+                left: rect.left - jogoRect.left,
+
+                top: rect.top - jogoRect.top,
+
+                right: rect.right - jogoRect.left,
+
+                bottom: rect.bottom - jogoRect.top
+
+            };
+
+        }
+
+
+        function colidiu(a, b) {
+
+            return (
+
+                a.left < b.right &&
+
+                a.right > b.left &&
+
+                a.top < b.bottom &&
+
+                a.bottom > b.top
+
+            );
+
+        }
+
+
+        function mover() {
+
+            if (jogoTerminado) return;
+
+
+            let novoX = x;
+
+            let novoY = y;
+
+
+            if (teclas["arrowright"] || teclas["d"]) {
+
+                novoX += velocidade;
+
+            }
+
+
+            if (teclas["arrowleft"] || teclas["a"]) {
+
+                novoX -= velocidade;
+
+            }
+
+
+            if (teclas["arrowup"] || teclas["w"]) {
+
+                novoY -= velocidade;
+
+            }
+
+
+            if (teclas["arrowdown"] || teclas["s"]) {
+
+                novoY += velocidade;
+
+            }
+
+
+            const jogadorTeste = {
+
+                left: novoX,
+
+                top: novoY,
+
+                right: novoX + 40,
+
+                bottom: novoY + 40
+
+            };
+
+
+            const paredes = document.querySelectorAll(".parede");
+
+
+            let bateu = false;
+
+
+            paredes.forEach(function(parede) {
+
+                const posicaoParede = pegarPosicao(parede);
+
+                if (colidiu(jogadorTeste, posicaoParede)) {
+
+                    bateu = true;
+
+                }
+
+            });
+
+
+            if (!bateu) {
+
+                x = novoX;
+
+                y = novoY;
+
+            }
+
+
+            player.style.left = x + "px";
+
+            player.style.top = y + "px";
+
+
+            verificarChave();
+
+            verificarArmadilhas();
+
+            verificarPorta();
+
+
+            requestAnimationFrame(mover);
+
+        }
+
+
+        function verificarChave() {
+
+            if (temChave) return;
+
+
+            const jogador = pegarPosicao(player);
+
+            const posicaoChave = pegarPosicao(chave);
+
+
+            if (colidiu(jogador, posicaoChave)) {
+
+                temChave = true;
+
+                chave.style.display = "none";
+
+                temChaveTexto.textContent = "SIM";
+
+            }
+
+        }
+
+
+        function perderVida() {
+
+            vidas--;
+
+            vidasTexto.textContent = vidas;
+
+
+            x = 70;
+
+            y = 70;
+
+
+            player.style.left = x + "px";
+
+            player.style.top = y + "px";
+
+
+            if (vidas <= 0) {
+
+                terminarJogo(
+
+                    "VOCÊ FOI PEGO!",
+
+                    "Suas vidas acabaram. Tente novamente."
+
+                );
+
+            }
+
+        }
+
+
+        function verificarArmadilhas() {
+
+            const jogador = pegarPosicao(player);
+
+            const armadilhas = document.querySelectorAll(".armadilha");
+
+
+            armadilhas.forEach(function(armadilha) {
+
+                const posicao = pegarPosicao(armadilha);
+
+
+                if (colidiu(jogador, posicao)) {
+
+                    perderVida();
+
+                }
+
+            });
+
+        }
+
+
+        function verificarPorta() {
+
+            const jogador = pegarPosicao(player);
+
+            const posicaoPorta = pegarPosicao(porta);
+
+
+            if (colidiu(jogador, posicaoPorta)) {
+
+                if (temChave) {
+
+                    terminarJogo(
+
+                        "🎉 VOCÊ ESCAPOU!",
+
+                        "Você pegou a chave e conseguiu fugir da prisão!"
+
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        function terminarJogo(titulo, texto) {
+
+    jogoTerminado = true;
+
+    tituloMensagem.textContent = titulo;
+
+    textoMensagem.textContent = texto;
+
+    mensagem.style.display = "block";
+
+
+    if (titulo.includes("ESCAPOU")) {
+
+        localStorage.setItem("nivel2Liberado", "sim");
+
+        setTimeout(function() {
+
+            location.href = "game.html";
+
+        }, 2000);
+
+    }
+
+}
+
+
+        mover();
+
+    </script>
+
+</body>
+
+</html>

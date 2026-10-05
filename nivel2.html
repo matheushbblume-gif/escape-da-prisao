@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Nível 2 - Segurança Máxima</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 10px;
+        }
+
+        #info {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        canvas {
+            background: #222;
+            border: 4px solid #555;
+        }
+
+        #mensagem {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border: 3px solid white;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        #mensagem h2 {
+            margin-top: 0;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🔴 NÍVEL 2 - SEGURANÇA MÁXIMA</h1>
+
+<div id="info">
+    ❤️ Vidas: <span id="vidas">2</span>
+    &nbsp;&nbsp;&nbsp;
+    🔑 Chaves: <span id="chaves">0</span>/2
+</div>
+
+<canvas id="jogo" width="900" height="550"></canvas>
+
+<div id="mensagem">
+    <h2 id="tituloMensagem"></h2>
+    <p id="textoMensagem"></p>
+    <button onclick="location.href='game.html'">
+        Voltar aos níveis
+    </button>
+</div>
+
+<script>
+
+const canvas = document.getElementById("jogo");
+const ctx = canvas.getContext("2d");
+
+const vidasTexto = document.getElementById("vidas");
+const chavesTexto = document.getElementById("chaves");
+
+const mensagem = document.getElementById("mensagem");
+const tituloMensagem = document.getElementById("tituloMensagem");
+const textoMensagem = document.getElementById("textoMensagem");
+
+
+// ==========================
+// JOGADOR
+// ==========================
+
+let jogador = {
+    x: 50,
+    y: 470,
+    largura: 25,
+    altura: 25,
+    velocidade: 4
+};
+
+
+// ==========================
+// POLICIAL
+// ==========================
+
+let policial = {
+    x: 430,
+    y: 270,
+    largura: 28,
+    altura: 28,
+
+    // velocidade menor
+    velocidade: 1.3
+};
+
+
+// ==========================
+// VIDAS E CHAVES
+// ==========================
+
+let vidas = 2;
+
+let chaves = 0;
+
+let jogoTerminado = false;
+
+
+// ==========================
+// PAREDES
+// ==========================
+
+const paredes = [
+
+    // Parede superior
+    {x: 0, y: 0, w: 900, h: 20},
+
+    // Parede inferior
+    {x: 0, y: 530, w: 900, h: 20},
+
+    // Parede esquerda
+    {x: 0, y: 0, w: 20, h: 550},
+
+    // Parede direita
+    {x: 880, y: 0, w: 20, h: 550},
+
+
+    // ===== BLOCO ESQUERDO =====
+
+    {x: 130, y: 80, w: 25, h: 220},
+
+    {x: 130, y: 300, w: 150, h: 25},
+
+
+    // ===== BLOCO CENTRAL =====
+
+    {x: 350, y: 80, w: 25, h: 180},
+
+    {x: 350, y: 340, w: 25, h: 130},
+
+    {x: 500, y: 80, w: 25, h: 150},
+
+    {x: 500, y: 300, w: 25, h: 170},
+
+
+    // ===== BLOCO DIREITO =====
+
+    {x: 650, y: 80, w: 25, h: 200},
+
+    {x: 650, y: 330, w: 25, h: 120},
+
+
+    // pequenas paredes
+
+    {x: 220, y: 80, w: 100, h: 25},
+
+    {x: 220, y: 200, w: 100, h: 25},
+
+    {x: 570, y: 180, w: 50, h: 25},
+
+    {x: 720, y: 180, w: 100, h: 25},
+
+    {x: 720, y: 400, w: 100, h: 25}
+];
+
+
+// ==========================
+// CHAVES
+// ==========================
+
+// A primeira fica em uma área aberta
+let chave1 = {
+    x: 230,
+    y: 130,
+    tamanho: 18,
+    pega: false
+};
+
+
+// Segunda chave
+let chave2 = {
+    x: 730,
+    y: 480,
+    tamanho: 18,
+    pega: false
+};
+
+
+// ==========================
+// PORTA
+// ==========================
+
+let porta = {
+    x: 820,
+    y: 45,
+    w: 40,
+    h: 60
+};
+
+
+// ==========================
+// TECLAS
+// ==========================
+
+let teclas = {};
+
+document.addEventListener("keydown", function(e) {
+    teclas[e.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup", function(e) {
+    teclas[e.key.toLowerCase()] = false;
+});
+
+
+// ==========================
+// COLISÃO
+// ==========================
+
+function colisao(a, b) {
+
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.largura > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.altura > b.y
+    );
+}
+
+
+// ==========================
+// VERIFICAR PAREDES
+// ==========================
+
+function bateuParede(objeto, novoX, novoY) {
+
+    let teste = {
+        x: novoX,
+        y: novoY,
+        largura: objeto.largura,
+        altura: objeto.altura
+    };
+
+    for (let parede of paredes) {
+
+        if (colisao(teste, {
+            x: parede.x,
+            y: parede.y,
+            w: parede.w,
+            h: parede.h
+        })) {
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// ==========================
+// MOVIMENTO DO JOGADOR
+// ==========================
+
+function moverJogador() {
+
+    let novoX = jogador.x;
+    let novoY = jogador.y;
+
+    if (teclas["arrowleft"] || teclas["a"]) {
+        novoX -= jogador.velocidade;
+    }
+
+    if (teclas["arrowright"] || teclas["d"]) {
+        novoX += jogador.velocidade;
+    }
+
+    if (teclas["arrowup"] || teclas["w"]) {
+        novoY -= jogador.velocidade;
+    }
+
+    if (teclas["arrowdown"] || teclas["s"]) {
+        novoY += jogador.velocidade;
+    }
+
+
+    // Movimento horizontal
+    if (!bateuParede(jogador, novoX, jogador.y)) {
+        jogador.x = novoX;
+    }
+
+
+    // Movimento vertical
+    if (!bateuParede(jogador, jogador.x, novoY)) {
+        jogador.y = novoY;
+    }
+}
+
+
+// ==========================
+// MOVIMENTO DO POLICIAL
+// ==========================
+
+function moverPolicial() {
+
+    let dx = jogador.x - policial.x;
+    let dy = jogador.y - policial.y;
+
+    let distancia = Math.sqrt(dx * dx + dy * dy);
+
+    if (distancia === 0) return;
+
+
+    let direcaoX = dx / distancia;
+    let direcaoY = dy / distancia;
+
+
+    // tenta andar na direção do jogador
+
+    let novoX =
+        policial.x +
+        direcaoX * policial.velocidade;
+
+    let novoY =
+        policial.y +
+        direcaoY * policial.velocidade;
+
+
+    // Primeiro tenta X
+    if (!bateuParede(policial, novoX, policial.y)) {
+        policial.x = novoX;
+    }
+
+    // Depois tenta Y
+    if (!bateuParede(policial, policial.x, novoY)) {
+        policial.y = novoY;
+    }
+}
+
+
+// ==========================
+// PEGAR CHAVES
+// ==========================
+
+function verificarChaves() {
+
+    if (!chave1.pega) {
+
+        let distancia = Math.hypot(
+            jogador.x - chave1.x,
+            jogador.y - chave1.y
+        );
+
+        if (distancia < 30) {
+
+            chave1.pega = true;
+            chaves++;
+
+            chavesTexto.textContent = chaves;
+        }
+    }
+
+
+    if (!chave2.pega) {
+
+        let distancia = Math.hypot(
+            jogador.x - chave2.x,
+            jogador.y - chave2.y
+        );
+
+        if (distancia < 30) {
+
+            chave2.pega = true;
+            chaves++;
+
+            chavesTexto.textContent = chaves;
+        }
+    }
+}
+
+
+// ==========================
+// DESENHAR
+// ==========================
+
+function desenhar() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    // Fundo
+    ctx.fillStyle = "#202020";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    // Paredes
+    ctx.fillStyle = "#555";
+
+    for (let parede of paredes) {
+
+        ctx.fillRect(
+            parede.x,
+            parede.y,
+            parede.w,
+            parede.h
+        );
+    }
+
+
+    // Chave 1
+    if (!chave1.pega) {
+
+        ctx.fillStyle = "gold";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            chave1.x,
+            chave1.y,
+            chave1.tamanho / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillRect(
+            chave1.x,
+            chave1.y - 3,
+            25,
+            6
+        );
+    }
+
+
+    // Chave 2
+    if (!chave2.pega) {
+
+        ctx.fillStyle = "gold";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            chave2.x,
+            chave2.y,
+            chave2.tamanho / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillRect(
+            chave2.x,
+            chave2.y - 3,
+            25,
+            6
+        );
+    }
+
+
+    // Porta
+    if (chaves >= 2) {
+
+        ctx.fillStyle = "#00ff66";
+
+    } else {
+
+        ctx.fillStyle = "#aa2222";
+    }
+
+    ctx.fillRect(
+        porta.x,
+        porta.y,
+        porta.w,
+        porta.h
+    );
+
+
+    // Jogador
+    ctx.fillStyle = "#3498db";
+
+    ctx.fillRect(
+        jogador.x,
+        jogador.y,
+        jogador.largura,
+        jogador.altura
+    );
+
+
+    // Policial
+    ctx.fillStyle = "#e74c3c";
+
+    ctx.fillRect(
+        policial.x,
+        policial.y,
+        policial.largura,
+        policial.altura
+    );
+
+
+    // Olhos do policial
+    ctx.fillStyle = "white";
+
+    ctx.fillRect(
+        policial.x + 6,
+        policial.y + 6,
+        5,
+        5
+    );
+
+    ctx.fillRect(
+        policial.x + 17,
+        policial.y + 6,
+        5,
+        5
+    );
+}
+
+
+// ==========================
+// PERDER VIDA
+// ==========================
+
+function perderVida() {
+
+    vidas--;
+
+    vidasTexto.textContent = vidas;
+
+    if (vidas <= 0) {
+
+        terminarJogo(
+            "💀 VOCÊ PERDEU!",
+            "O policial conseguiu pegar você."
+        );
+
+        return;
+    }
+
+
+    // Volta para o começo
+    jogador.x = 50;
+    jogador.y = 470;
+
+    // Policial volta para o centro
+    policial.x = 430;
+    policial.y = 270;
+}
+
+
+// ==========================
+// VERIFICAR POLICIAL
+// ==========================
+
+function verificarPolicial() {
+
+    if (colisao(jogador, {
+        x: policial.x,
+        y: policial.y,
+        w: policial.largura,
+        h: policial.altura
+    })) {
+
+        perderVida();
+    }
+}
+
+
+// ==========================
+// VERIFICAR PORTA
+// ==========================
+
+function verificarPorta() {
+
+    if (colisao(jogador, {
+        x: porta.x,
+        y: porta.y,
+        w: porta.w,
+        h: porta.h
+    })) {
+
+        if (chaves >= 2) {
+
+            terminarJogo(
+                "🚨 VOCÊ ESCAPOU!",
+                "Você conseguiu escapar da prisão de segurança máxima!"
+            );
+
+        }
+    }
+}
+
+
+// ==========================
+// FINAL DO JOGO
+// ==========================
+
+function terminarJogo(titulo, texto) {
+
+    if (jogoTerminado) return;
+
+    jogoTerminado = true;
+
+    tituloMensagem.textContent = titulo;
+
+    textoMensagem.textContent = texto;
+
+    mensagem.style.display = "block";
+
+
+    if (titulo.includes("ESCAPOU")) {
+
+        localStorage.setItem(
+            "nivel3Liberado",
+            "sim"
+        );
+    }
+}
+
+
+// ==========================
+// LOOP DO JOGO
+// ==========================
+
+function loop() {
+
+    if (!jogoTerminado) {
+
+        moverJogador();
+
+        moverPolicial();
+
+        verificarChaves();
+
+        verificarPolicial();
+
+        verificarPorta();
+
+        desenhar();
+    }
+
+    requestAnimationFrame(loop);
+}
+
+
+loop();
+
+</script>
+
+</body>
+</html>

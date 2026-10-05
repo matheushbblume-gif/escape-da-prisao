@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Escape da Prisão - Níveis</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            background: #151515;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 50px;
+        }
+
+        .nivel {
+            display: block;
+            width: 350px;
+            margin: 20px auto;
+            padding: 20px;
+            font-size: 22px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .liberado {
+            background: #27ae60;
+            color: white;
+        }
+
+        .bloqueado {
+            background: #444;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<h1>🎮 SELECIONE UM NÍVEL</h1>
+
+
+<!-- NÍVEL 1 -->
+
+<button
+    class="nivel liberado"
+    onclick="location.href='nivel1.html'">
+
+    🟢 NÍVEL 1 - ESCAPE DA PRISÃO
+
+</button>
+
+
+<!-- NÍVEL 2 -->
+
+<button
+    id="nivel2"
+    class="nivel bloqueado"
+    onclick="abrirNivel2()">
+
+    🔒 NÍVEL 2 - BLOQUEADO
+
+</button>
+
+
+<!-- NÍVEL 3 -->
+
+<button
+    id="nivel3"
+    class="nivel bloqueado"
+    onclick="abrirNivel3()">
+
+    🔒 NÍVEL 3 - BLOQUEADO
+
+</button>
+
+
+<script>
+
+
+// ==========================================
+// VERIFICAR NÍVEL 2
+// ==========================================
+
+if (
+    localStorage.getItem("nivel2Liberado")
+    === "sim"
+) {
+
+    const botao2 =
+        document.getElementById("nivel2");
+
+    botao2.className =
+        "nivel liberado";
+
+    botao2.innerHTML =
+        "🟢 NÍVEL 2 - FUGA DO BLOCO DE SEGURANÇA";
+
+}
+
+
+// ==========================================
+// VERIFICAR NÍVEL 3
+// ==========================================
+
+if (
+    localStorage.getItem("nivel3Liberado")
+    === "sim"
+) {
+
+    const botao3 =
+        document.getElementById("nivel3");
+
+    botao3.className =
+        "nivel liberado";
+
+    botao3.innerHTML =
+        "🟢 NÍVEL 3 - FUGA IMPOSSÍVEL";
+
+}
+
+
+// ==========================================
+// ABRIR NÍVEL 2
+// ==========================================
+
+function abrirNivel2() {
+
+    if (
+        localStorage.getItem("nivel2Liberado")
+        === "sim"
+    ) {
+
+        location.href =
+            "nivel2.html";
+
+    }
+
+}
+
+
+// ==========================================
+// ABRIR NÍVEL 3
+// ==========================================
+
+function abrirNivel3() {
+
+    if (
+        localStorage.getItem("nivel3Liberado")
+        === "sim"
+    ) {
+
+        location.href =
+            "nivel3.html";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
